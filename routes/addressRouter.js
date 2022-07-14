@@ -1,63 +1,58 @@
 const router = require("express").Router();
 
-const { v4: uuid } = require("uuid");
-
-const addressData = require("../data/addressData");
+const AddressModel = require("../models/Address.model");
+const UserModel = require("../models/User.model");
 
 //POST
 
-router.post("/new", (req, res) => {
-  addressData.push({ ...req.body, id: uuid() });
-  return res
-    .status(201)
-    .json({ message: "Successfully created", result: addressData });
+router.post("/new/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const newAddress = await AddressModel.create({ ...req.body, user: userId });
+    const editedUser = await UserModel.findOneAndUpdate(
+      { _id: userId },
+      { $push: { addresses: newAddress._id } },
+      { new: true }
+    );
+    return res.status(201).json({ newAddress, editedUser });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
 });
 
 //GET
-router.get("/read", (req, res) => {
-  return res.status(200).json({ message: "Success", result: addressData });
-});
+router.get("/read", (req, res) => {});
 
 //read-details
-router.get("/read/:id", (req, res) => {
-  const { id } = req.params;
-  const result = addressData.filter((elem) => {
-    return elem.id === id;
-  });
-  return res.status(200).json({ message: "Address found!", result: result[0] });
-});
+router.get("/read/:id", (req, res) => {});
 
 //PUT
-router.put("/update/:id", (req, res) => {
-  const { id } = req.params;
-
-  addressData.forEach((currentDocument, i) => {
-    if (currentDocument.id === id) {
-      addressData[i] = { ...req.body, id: currentDocument.id };
-    }
-  });
-
-  const newDocument = addressData.filter(
-    (currentDocument) => currentDocument.id === id
-  );
-
-  return res.status(200).json(newDocument[0]);
+router.put("/update/:addressId", async (req, res) => {
+  const { addressId } = req.params;
+  try {
+    const editedAddress = await AddressModel.findOneAndUpdate(
+      { _id: addressId },
+      { ...req.body },
+      { new: true }
+    );
+    return res.status(200).json(editedAddress);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
 });
 
 //PATCH
 
 //DELETE
 
-router.delete("/delete/:id", (req, res) => {
-  const { id } = req.params;
-  addressData.pop(
-    addressData.indexOf(
-      addressData.find((elem) => {
-        elem.id === id;
-      })
-    )
-  );
-  res.status(200).json({ message: "Record deleted" });
+router.delete("/delete/:addressId", async (req, res) => {
+  const { addressId } = req.params;
+  try {
+    const deletedAddress = await AddressModel.deleteOne({ _id: addressId });
+    return res.status(200).json(deletedAddress);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
 });
 
 module.exports = router;

@@ -1,5 +1,8 @@
 const express = require("express");
 
+require("dotenv").config();
+require("./config/db.config")();
+
 const app = express();
 
 app.use(express.json());
@@ -15,6 +18,7 @@ app.use("/user", userRouter);
 const addressRouter = require("./routes/addressRouter");
 app.use("/address", addressRouter);
 
-app.listen(4000, () => {
-  console.log("Running on port 4000");
+//LISTEN
+app.listen(Number(process.env.PORT), () => {
+  console.log(`Running on port ${process.env.PORT}`);
 });
